@@ -7,18 +7,32 @@ with open("index.html", "r", encoding="utf-8") as file:
 soup = BeautifulSoup(content, "html.parser")
 data = []
 
-divs = soup.find_all("div", class_="a-section a-spacing-none octopus-pc-item-block octopus-pc-asin-block")
+# Loop through top-level sections like Address4, Address6, etc.
+sections = soup.find_all("section", class_="p2 mb2 clearfix bg-white minishadow")
 
-for div in divs:
-    img_tag = div.find("a", class_="a-link-normal octopus-pc-item-link")
-    link = img_tag.img["src"] if img_tag and img_tag.img else ""
-    span_title = div.find("span", class_="a-size-base a-color-base")
-    title = span_title.text.strip() if span_title else ""
-    span_rating = div.find("span", class_="a-icon-alt")
-    rating = span_rating.text.strip() if span_rating else ""
-    span_price = div.find("span", class_="a-price-whole")
-    price = span_price.text.strip() if span_price else ""
-    data.append({"link": link, "title": title, "rating": rating, "price": price})
+for section in sections:
+    header = section.find("h3")
+    if not header:
+        continue
+    section_name = header.text.strip()
+
+    methods = []
+    method_divs = section.find_all("div", class_="border-bottom")
+    for method_div in method_divs:
+        name_div = method_div.find("span", class_="code strong strong truncate")
+        desc_div = method_div.find("p")
+
+        name = name_div.text.strip() if name_div else ""
+        description = desc_div.text.strip() if desc_div else ""
+
+        if name:
+            methods.append({"name": name, "description": description})
+
+    if methods:
+        data.append({
+            "section": section_name,
+            "methods": methods
+        })
 
 with open("data.json", "w", encoding="utf-8") as json_file:
     json.dump(data, json_file, indent=4, ensure_ascii=False)
